@@ -37,9 +37,9 @@ metadata:
 data:
   config.yaml: |
     addr: ":443"
-    secure: true
+    secure: false
     acme:
-      enabled: false
+      enabled: true
     cert: |
       -----BEGIN CERTIFICATE-----
       -----END CERTIFICATE-----
@@ -76,11 +76,10 @@ spec:
         ports:
         - containerPort: 443
         volumeMounts:
-          - mountPath: /ca
+          - mountPath: /kgw/ca
             name: ca
           - name: config
-            mountPath: /config.yaml
-            subPath: config.yaml
+            mountPath: /kgw/etc
       imagePullSecrets:
         - name: reg
       restartPolicy: Always
