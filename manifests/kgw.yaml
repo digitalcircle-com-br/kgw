@@ -37,6 +37,15 @@ metadata:
 data:
   config.yaml: |
     addr: ":443"
+    secure: true
+    acme:
+      enabled: false
+    cert: |
+      -----BEGIN CERTIFICATE-----
+      -----END CERTIFICATE-----
+    key: |
+      -----BEGIN RSA PRIVATE KEY-----
+      -----END RSA PRIVATE KEY-----
     routes:
       - path: /hw/
         target: http://hw:80
@@ -61,6 +70,9 @@ spec:
       containers:
       - name: *app
         image: digitalcircle/kgw:latest
+        env:
+          - name: LOG_LEVEL
+            value: trace
         ports:
         - containerPort: 443
         volumeMounts:

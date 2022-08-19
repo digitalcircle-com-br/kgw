@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -92,6 +93,8 @@ func buildMux() error {
 	if err != nil {
 		return err
 	}
+	os.WriteFile("/ca/cert", []byte(cfg.Cert), 0600)
+	os.WriteFile("/ca/key", []byte(cfg.Key), 0600)
 	nmux := http.NewServeMux()
 	for _, v := range cfg.Routes {
 		func(ar ConfigRoute) {
@@ -117,7 +120,7 @@ func handleCors(w http.ResponseWriter, r *http.Request) {
 var cfg *Config = &Config{}
 
 func run() error {
-	log.Printf("v 202208142209")
+	log.Printf("v 202208190004")
 
 	err := detectConfigOnce()
 	if err != nil {
@@ -132,34 +135,35 @@ func run() error {
 		}),
 	}
 
+	mux.HandleFunc("/__test", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("It works!!\n\n"))
+		r.Write(w)
+	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	})
 
 	go detectConfig()
 
-	// switch {
+	switch {
 
-	// case cfg.Acme != nil && cfg.Acme.Enabled:
-	logrus.Debugf("Going ACME/TLS mode - %s", cfg.Addr)
-	m := &autocert.Manager{
-		Cache:  autocert.DirCache("/ca"),
-		Prompt: autocert.AcceptTOS,
-		Email:  "caroor@digitalcircle.com.br",
+	case cfg.Acme != nil && cfg.Acme.Enabled:
+		logrus.Debugf("Going ACME/TLS mode - %s", cfg.Addr)
+		m := &autocert.Manager{
+			Cache:  autocert.DirCache("/ca"),
+			Prompt: autocert.AcceptTOS,
+			Email:  "caroot@digitalcircle.com.br",
+		}
+
+		s.TLSConfig = m.TLSConfig()
+		err = s.ListenAndServeTLS("", "")
+	case cfg.Secure:
+		logrus.Debugf("Going TLS mode - %s", cfg.Addr)
+		err = s.ListenAndServeTLS("/ca/cert", "/ca/key")
+	default:
+		logrus.Debugf("Going PLAIN mode - %s", cfg.Addr)
+		err = s.ListenAndServe()
 	}
-
-	s.TLSConfig = m.TLSConfig()
-	err = s.ListenAndServeTLS("", "")
-	// case cfg.Secure:
-	// 	logrus.Debugf("Going TLS mode - %s", cfg.Addr)
-	// 	s.TLSConfig = &tls.Config{
-	// 		GetCertificate: getCertificate,
-	// 	}
-	// 	err = s.ListenAndServeTLS("", "")
-	// default:
-	// 	logrus.Debugf("Going PLAIN mode - %s", cfg.Addr)
-	// 	err = s.ListenAndServe()
-	// }
 
 	return err
 }

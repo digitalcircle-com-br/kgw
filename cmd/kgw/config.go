@@ -26,12 +26,14 @@ type ConfigMW struct {
 }
 
 type Config struct {
-	Addr      string        `yaml:"addr"`
-	//Secure    bool          `yaml:"secure"`
+	Addr   string `yaml:"addr"`
+	Secure bool   `yaml:"secure"`
+	Cert   string `yaml:"cert"`
+	Key    string `yaml:"key"`
 	//CARootdir string        `yaml:"ca-rootdir"`
-	Routes    []ConfigRoute `yaml:"routes"`
+	Routes []ConfigRoute `yaml:"routes"`
 	//Mws       []ConfigMW    `yaml:"mws"`
-	//Acme      *ConfigAcme   `yaml:"acme"`
+	Acme *ConfigAcme `yaml:"acme"`
 }
 
 var configs = []string{
