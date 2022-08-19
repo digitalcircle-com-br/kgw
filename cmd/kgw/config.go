@@ -38,6 +38,8 @@ type Config struct {
 
 var configs = []string{
 	"./config.yaml",
+	"/kgw/config.yaml",
+	"/kgw/etc/config.yaml",
 	"./etc/config.yaml",
 	"/config.yaml",
 }
@@ -51,6 +53,7 @@ func detectConfigOnce() error {
 			if err == nil {
 				logrus.Infof("Using config: %s", f)
 				configName = f
+				break
 			}
 
 		}
@@ -65,7 +68,7 @@ func detectConfigOnce() error {
 	}
 	if string(bs) != string(lastCfg) {
 		lastCfg = bs
-		logrus.Debugf("new cfg detected: %s", string(bs))
+		logrus.Infof("new cfg detected: %s", string(bs))
 		err = buildMux()
 		if err != nil {
 			return err

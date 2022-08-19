@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"io"
 	"log"
 	"net/http"
@@ -13,6 +14,9 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 	"gopkg.in/yaml.v3"
 )
+
+//go:embed version
+var version string
 
 var lastCfg []byte
 
@@ -119,8 +123,26 @@ func handleCors(w http.ResponseWriter, r *http.Request) {
 
 var cfg *Config = &Config{}
 
+func initLog() {
+	envll := os.Getenv("LOG_LEVEL")
+	if envll == "" {
+		logrus.SetLevel(logrus.InfoLevel)
+		return
+	}
+	ll, err := logrus.ParseLevel(envll)
+	if err != nil {
+		logrus.SetLevel(logrus.TraceLevel)
+		logrus.Warnf("Log level %s is unknown - falling back to trace", envll)
+		return
+	}
+	logrus.SetLevel(ll)
+}
+
 func run() error {
-	log.Printf("v 202208190004")
+
+	initLog()
+
+	logrus.Infof("Version: %s", version)
 
 	err := detectConfigOnce()
 	if err != nil {
@@ -148,9 +170,9 @@ func run() error {
 	switch {
 
 	case cfg.Acme != nil && cfg.Acme.Enabled:
-		logrus.Debugf("Going ACME/TLS mode - %s", cfg.Addr)
+		logrus.Debugf("Going ACME/TLS mode - :443")
 		m := &autocert.Manager{
-			Cache:  autocert.DirCache("/ca"),
+			Cache:  autocert.DirCache("/kgw/ca"),
 			Prompt: autocert.AcceptTOS,
 			Email:  "caroot@digitalcircle.com.br",
 		}
@@ -158,10 +180,10 @@ func run() error {
 		s.TLSConfig = m.TLSConfig()
 		err = s.ListenAndServeTLS("", "")
 	case cfg.Secure:
-		logrus.Debugf("Going TLS mode - %s", cfg.Addr)
-		err = s.ListenAndServeTLS("/ca/cert", "/ca/key")
+		logrus.Debugf("Going TLS mode - :443")
+		err = s.ListenAndServeTLS("/kgw/ca/cert", "/kgw/ca/key")
 	default:
-		logrus.Debugf("Going PLAIN mode - %s", cfg.Addr)
+		logrus.Debugf("Going PLAIN mode - :80")
 		err = s.ListenAndServe()
 	}
 
