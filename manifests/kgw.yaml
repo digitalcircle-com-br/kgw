@@ -1,0 +1,97 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: kgw-volume
+  namespace: default
+  labels:
+    type: local
+    app: kgw
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 64Mi
+  accessModes:
+  - ReadWriteMany
+  hostPath:
+    path: "/mnt/data"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: kgw-pv-claim
+  namespace: default
+  labels:
+    app: kgw
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 64Mi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kgw-config
+data:
+  config.yaml: |
+    addr: ":443"
+    routes:
+      - path: /hw/
+        target: http://hw:80
+        strip-path: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &app kgw
+  labels:
+    app: *app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: *app
+  template:
+    metadata:
+      labels:
+        app: *app
+    spec:
+      containers:
+      - name: *app
+        image: digitalcircle/kgw:latest
+        ports:
+        - containerPort: 443
+        volumeMounts:
+          - mountPath: /ca
+            name: ca
+          - name: config
+            mountPath: /config.yaml
+            subPath: config.yaml
+      imagePullSecrets:
+        - name: reg
+      restartPolicy: Always
+      volumes:
+        - name: ca
+          persistentVolumeClaim:
+            claimName: kgw-pv-claim
+        - name: config
+          configMap:
+            name: kgw-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: &app kgw
+  namespace: default
+spec:
+  ports:
+    - name: 443-tcp
+      protocol: TCP
+      port: 443
+      targetPort: 443
+  selector:
+    app: *app
+  type: LoadBalancer
+ 
