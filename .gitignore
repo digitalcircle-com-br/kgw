@@ -15,3 +15,5 @@
 # vendor/
 deploy/main
 deploy/kgw
+__debug_bin
+kgw

@@ -26,10 +26,11 @@ type ConfigMW struct {
 }
 
 type Config struct {
-	Addr   string `yaml:"addr"`
-	Secure bool   `yaml:"secure"`
-	Cert   string `yaml:"cert"`
-	Key    string `yaml:"key"`
+	Addr     string `yaml:"addr"`
+	Secure   bool   `yaml:"secure"`
+	Cert     string `yaml:"cert"`
+	Key      string `yaml:"key"`
+	LogLevel string `yaml:"log-level"`
 	//CARootdir string        `yaml:"ca-rootdir"`
 	Routes []ConfigRoute `yaml:"routes"`
 	//Mws       []ConfigMW    `yaml:"mws"`

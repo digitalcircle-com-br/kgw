@@ -1,0 +1,6 @@
+secure: false
+log-level: trace
+routes:
+  - path: /pdf/
+    target: http://localhost:8081
+    strip-path: true
