@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
@@ -27,6 +28,7 @@ func newForwader(cr ConfigRoute) http.HandlerFunc {
 		logrus.Warnf("error setting up fwd: %s", err.Error())
 	}
 	ret := httputil.NewSingleHostReverseProxy(url)
+	ret.FlushInterval = time.Second * 5
 	if cr.StripPath {
 		return func(w http.ResponseWriter, r *http.Request) {
 			http.StripPrefix(cr.Path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -38,75 +40,6 @@ func newForwader(cr ConfigRoute) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ret.ServeHTTP(w, r)
 	}
-
-	// src := r.Path
-	// dst := r.Target
-	// strip := r.StripPath
-
-	// return func(w http.ResponseWriter, r *http.Request) {
-	// 	start := time.Now()
-	// 	defer func() {
-	// 		dur := time.Since(start)
-	// 		log.Printf("Total Processing time: %s", dur.String())
-	// 	}()
-	// 	if src == "" {
-	// 		src = "/"
-	// 	}
-	// 	host := strings.Split(dst, "://")[1]
-	// 	r.Header.Add("x-proxied-by-lb", "true")
-	// 	r.Host = host
-	// 	r.RequestURI = ""
-
-	// 	// if src != "/" {
-	// 	npath := r.URL.Path
-	// 	if strip {
-	// 		npath = strings.Replace(r.URL.Path, src, "/", 1)
-	// 	}
-	// 	npath = strings.ReplaceAll(npath, "//", "/")
-
-	// 	strings.TrimSuffix(dst, "/")
-
-	// 	strings.TrimPrefix(npath, "/")
-
-	// 	nurlstr := dst + "/" + npath
-
-	// 	if r.URL.RawQuery != "" {
-	// 		nurlstr = nurlstr + "?" + r.URL.RawQuery
-	// 	}
-
-	// 	log.Printf("url: %s", nurlstr)
-
-	// 	nurl, err := url.Parse(nurlstr)
-
-	// 	if err != nil {
-	// 		http.Error(w, err.Error(), 500)
-	// 		log.Printf("error: %s", err.Error())
-	// 		return
-	// 	}
-
-	// 	log.Printf("Redirecting: [%s] %s=>%s", src, r.URL.String(), nurl.String())
-
-	// 	r.URL = nurl
-
-	// 	res, err := http.DefaultClient.Do(r)
-	// 	if err != nil {
-	// 		http.Error(w, err.Error(), 500)
-	// 		log.Printf("error: %s", err.Error())
-	// 		return
-	// 	}
-	// 	if res.StatusCode != 200 {
-	// 		log.Printf("Error calling %s: %s", r.URL.String(), res.Status)
-	// 	}
-	// 	for k, v := range res.Header {
-	// 		for _, vv := range v {
-	// 			w.Header().Add(k, vv)
-	// 		}
-	// 	}
-	// 	w.WriteHeader(res.StatusCode)
-	// 	defer res.Body.Close()
-	// 	defer r.Body.Close()
-	// 	io.Copy(w, res.Body)
-	// }
 }
 
 func buildMux() error {
@@ -121,8 +54,14 @@ func buildMux() error {
 		}
 		logrus.SetLevel(lv)
 	}
-	os.WriteFile("/kgw/ca/cert", []byte(cfg.Cert), 0600)
-	os.WriteFile("/kgw/ca/key", []byte(cfg.Key), 0600)
+	err = os.WriteFile("/kgw/ca/cert", []byte(cfg.Cert), 0600)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile("/kgw/ca/key", []byte(cfg.Key), 0600)
+	if err != nil {
+		return err
+	}
 	nmux := http.NewServeMux()
 	for _, v := range cfg.Routes {
 		func(ar ConfigRoute) {

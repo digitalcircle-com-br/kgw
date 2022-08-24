@@ -2,6 +2,12 @@
 DOCKER = docker
 
 .PHONY: kgw
+kgw-local:
+	echo $$(date) > cmd/kgw/version
+	CGO_ENABLED=false GOOS=linux go build -o ./deploy/amd64/kgw ./cmd/kgw
+	$(DOCKER) build -t digitalcircle/kgw:latest -f deploy/amd64/Dockerfile .
+	$(DOCKER) push digitalcircle/kgw:latest
+#	docker build -t router -f deploy/router/Dockerfile .
 kgw:
 	echo $$(date) > cmd/kgw/version
 	CGO_ENABLED=false GOARCH=amd64 GOOS=linux go build -o ./deploy/amd64/kgw ./cmd/kgw
