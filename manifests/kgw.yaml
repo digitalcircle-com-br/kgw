@@ -69,7 +69,7 @@ spec:
     spec:
       containers:
       - name: *app
-        image: digitalcircle/kgw:latest
+        image: digitalcircle/kgw:arm64
         env:
           - name: LOG_LEVEL
             value: trace
