@@ -1,7 +1,7 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  namespace: default
+  namespace: kgw
   name: kgw
 rules:
   - apiGroups: [""]
@@ -18,17 +18,17 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kgw
-  namespace: default
+  namespace: kgw
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: kgw-kgw
-  namespace: default
+  namespace: kgw
 subjects:
   - kind: ServiceAccount
     name: kgw
-    namespace: default
+    namespace: kgw
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -38,28 +38,31 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   name: kgw-volume
-  namespace: default
   labels:
     type: local
     app: kgw
 spec:
-  storageClassName: manual
   capacity:
     storage: 64Mi
+  hostPath:
+    path: >-
+      /var/lib/rancher/k3s/storage/kgw-volume
+    type: DirectoryOrCreate
   accessModes:
   - ReadWriteMany
-  hostPath:
-    path: "/mnt/data"
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local-path
+  volumeMode: Filesystem
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: kgw-pv-claim
-  namespace: default
+  namespace: kgw
   labels:
     app: kgw
 spec:
-  storageClassName: manual
+  storageClassName: local-path
   accessModes:
     - ReadWriteMany
   resources:
@@ -70,6 +73,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kgw-config
+  namespace: kgw
 data:
   config.yaml: |
     addr: ":443"
@@ -91,6 +95,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: &app kgw
+  namespace: kgw
   labels:
     app: *app
 spec:
@@ -105,21 +110,20 @@ spec:
     spec:
       containers:
       - name: *app
-        image: digitalcircle/kgw:latest
-        imagePullPolicy: Never
+        image: digitalcircle/latest
         env:
           - name: LOG_LEVEL
             value: trace
         ports:
         - containerPort: 443
+        - containerPort: 8081
         volumeMounts:
           - mountPath: /kgw/ca
-            name: ca
+            name: cert
           - name: config
             mountPath: /kgw/etc
       imagePullSecrets:
         - name: reg
-
       restartPolicy: Always
       serviceAccount: kgw
       volumes:
@@ -129,25 +133,28 @@ spec:
         - name: config
           configMap:
             name: kgw-config
+        - name: cert
+          secretName: cert
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: &app kgw
-  namespace: default
+  namespace: kgw
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: /
     prometheus.io/port: "8081"
-    kgw.host: aaa
-    kgw.path: bbb
-    kgw.strip: ccc
 spec:
   ports:
     - name: 443-tcp
       protocol: TCP
       port: 443
       targetPort: 443
+    - name: 8081-tcp
+      protocol: TCP
+      port: 8081
+      targetPort: 8081
   selector:
     app: *app
   type: LoadBalancer

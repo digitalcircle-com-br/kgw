@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -32,26 +33,6 @@ func buildMux() error {
 		}
 		logrus.SetLevel(lv)
 	}
-	err = os.WriteFile("/kgw/ca/cert", []byte(cfg.Cert), 0600)
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile("/kgw/ca/key", []byte(cfg.Key), 0600)
-	if err != nil {
-		return err
-	}
-
-	s := http.Server{
-		Addr:    ":8081",
-		Handler: promhttp.Handler(),
-	}
-
-	go func() {
-		err := s.ListenAndServe()
-		if err != nil {
-			logrus.Fatalf("error running prom server: %s", err.Error())
-		}
-	}()
 
 	mux = k8s.BuildMux()
 	go func() {
@@ -102,7 +83,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-
+	go detectConfig()
 	var s = http.Server{
 		Addr: cfg.Addr,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -119,7 +100,18 @@ func run() error {
 		http.NotFound(w, r)
 	})
 
-	go detectConfig()
+	prom := http.Server{
+		Addr:    ":8081",
+		Handler: promhttp.Handler(),
+	}
+
+	go func() {
+		logrus.Infof("Running Prom at 8081")
+		err := prom.ListenAndServe()
+		if err != nil {
+			logrus.Fatalf("error running prom server: %s", err.Error())
+		}
+	}()
 
 	switch {
 
@@ -135,6 +127,14 @@ func run() error {
 		err = s.ListenAndServeTLS("", "")
 	case cfg.Secure:
 		logrus.Debugf("Going TLS mode - :443")
+		_, err = os.Stat("/kgw/ca/cert")
+		if err != nil {
+			return fmt.Errorf("could not load cert: %s", err.Error())
+		}
+		_, err = os.Stat("/kgw/ca/key")
+		if err != nil {
+			return fmt.Errorf("could not load key: %s", err.Error())
+		}
 		err = s.ListenAndServeTLS("/kgw/ca/cert", "/kgw/ca/key")
 	default:
 		logrus.Debugf("Going PLAIN mode - :80")
