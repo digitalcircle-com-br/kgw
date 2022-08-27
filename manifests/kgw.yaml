@@ -1,3 +1,39 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: default
+  name: kgw
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "services", "pods", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get"]
+  - apiGroups: ["extensions"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kgw
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kgw-kgw
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: kgw
+    namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kgw
+---
 kind: PersistentVolume
 apiVersion: v1
 metadata:
@@ -69,7 +105,8 @@ spec:
     spec:
       containers:
       - name: *app
-        image: digitalcircle/kgw:arm64
+        image: digitalcircle/kgw:latest
+        imagePullPolicy: Never
         env:
           - name: LOG_LEVEL
             value: trace
@@ -82,7 +119,9 @@ spec:
             mountPath: /kgw/etc
       imagePullSecrets:
         - name: reg
+
       restartPolicy: Always
+      serviceAccount: kgw
       volumes:
         - name: ca
           persistentVolumeClaim:
@@ -96,6 +135,13 @@ kind: Service
 metadata:
   name: &app kgw
   namespace: default
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /
+    prometheus.io/port: "8081"
+    kgw.host: aaa
+    kgw.path: bbb
+    kgw.strip: ccc
 spec:
   ports:
     - name: 443-tcp

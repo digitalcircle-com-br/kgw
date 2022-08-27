@@ -2,14 +2,12 @@ package main
 
 import (
 	_ "embed"
-	"io/fs"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"os"
-	"path/filepath"
 	"time"
 
+	"github.com/digitalcircle-com-br/kgw/cmd/kgw/k8s"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
 	"gopkg.in/yaml.v3"
@@ -21,26 +19,6 @@ var version string
 var lastCfg []byte
 
 var mux *http.ServeMux = http.NewServeMux()
-
-func newForwader(cr ConfigRoute) http.HandlerFunc {
-	url, err := url.Parse(cr.Target)
-	if err != nil {
-		logrus.Warnf("error setting up fwd: %s", err.Error())
-	}
-	ret := httputil.NewSingleHostReverseProxy(url)
-	ret.FlushInterval = time.Second * 5
-	if cr.StripPath {
-		return func(w http.ResponseWriter, r *http.Request) {
-			http.StripPrefix(cr.Path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				ret.ServeHTTP(w, r)
-			})).ServeHTTP(w, r)
-
-		}
-	}
-	return func(w http.ResponseWriter, r *http.Request) {
-		ret.ServeHTTP(w, r)
-	}
-}
 
 func buildMux() error {
 	err := yaml.Unmarshal(lastCfg, cfg)
@@ -62,13 +40,26 @@ func buildMux() error {
 	if err != nil {
 		return err
 	}
-	nmux := http.NewServeMux()
-	for _, v := range cfg.Routes {
-		func(ar ConfigRoute) {
-			nmux.HandleFunc(v.Path, newForwader(ar))
-		}(v)
+
+	s := http.Server{
+		Addr:    ":8081",
+		Handler: promhttp.Handler(),
 	}
-	mux = nmux
+
+	go func() {
+		err := s.ListenAndServe()
+		if err != nil {
+			logrus.Fatalf("error running prom server: %s", err.Error())
+		}
+	}()
+
+	mux = k8s.BuildMux()
+	go func() {
+		for {
+			time.Sleep(time.Second * 15)
+			mux = k8s.BuildMux()
+		}
+	}()
 	return nil
 }
 
@@ -101,21 +92,9 @@ func initLog() {
 	logrus.SetLevel(ll)
 }
 
-func dumpMounts() {
-	logrus.Debug("Mounted /kgw files:")
-	filepath.WalkDir("/kgw", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		logrus.Debugf(" - %s", path)
-		return nil
-	})
-}
-
 func run() error {
 
 	initLog()
-	dumpMounts()
 
 	logrus.Infof("Version: %s", version)
 
