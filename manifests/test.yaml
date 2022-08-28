@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &app khelloworld-a
+  namespace: default
+  labels:
+    app: *app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: *app
+  template:
+    metadata:
+      labels:
+        app: *app
+    spec:
+      containers:
+        - name: *app
+          image: digitalcircle/khelloworld:amd64
+          env:
+            - name: TITLE
+              value: I am AAAAAA
+          ports:
+            - containerPort: 8080
+      imagePullSecrets:
+        - name: reg
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: &app khelloworld-a
+  namespace: default
+  annotations:
+    kgw.path: "hwa.host.local/"
+spec:
+  ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+  selector:
+    app: *app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &app khelloworld-b
+  namespace: default
+  labels:
+    app: *app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: *app
+  template:
+    metadata:
+      labels:
+        app: *app
+    spec:
+      containers:
+        - name: *app
+          image: digitalcircle/khelloworld:amd64
+          env:
+            - name: TITLE
+              value: I am BBBB
+          ports:
+            - containerPort: 8080
+      imagePullSecrets:
+        - name: reg
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: &app khelloworld-b
+  namespace: default
+  annotations:
+    kgw.path: "hwb.host.local/bbb/"
+spec:
+  ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+  selector:
+    app: *app
+

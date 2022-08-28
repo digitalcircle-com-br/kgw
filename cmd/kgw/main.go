@@ -97,7 +97,8 @@ func run() error {
 		r.Write(w)
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.NotFound(w, r)
+		w.WriteHeader(404)
+		r.Write(w)
 	})
 
 	prom := http.Server{
