@@ -20,19 +20,12 @@ type ConfigAcme struct {
 	Whitelist []string `yaml:"whitelist"`
 }
 
-type ConfigMW struct {
-	Name   string      `yaml:"name"`
-	Params interface{} `yaml:"params"`
-}
-
 type Config struct {
-	Addr     string `yaml:"addr"`
-	Secure   bool   `yaml:"secure"`
-	LogLevel string `yaml:"log-level"`
-	//CARootdir string        `yaml:"ca-rootdir"`
-	Routes []ConfigRoute `yaml:"routes"`
-	//Mws       []ConfigMW    `yaml:"mws"`
-	Acme *ConfigAcme `yaml:"acme"`
+	Addr     string        `yaml:"addr"`
+	Secure   bool          `yaml:"secure"`
+	LogLevel string        `yaml:"log-level"`
+	Routes   []ConfigRoute `yaml:"routes"`
+	Acme     *ConfigAcme   `yaml:"acme"`
 }
 
 var configs = []string{

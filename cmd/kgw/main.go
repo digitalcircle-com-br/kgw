@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -118,6 +119,7 @@ func run() error {
 
 	case cfg.Acme != nil && cfg.Acme.Enabled:
 		logrus.Debugf("Going ACME/TLS mode - :443")
+		
 		m := &autocert.Manager{
 			Cache:  autocert.DirCache("/kgw/ca"),
 			Prompt: autocert.AcceptTOS,
@@ -125,7 +127,9 @@ func run() error {
 		}
 
 		s.TLSConfig = m.TLSConfig()
+
 		err = s.ListenAndServeTLS("", "")
+
 	case cfg.Secure:
 		logrus.Debugf("Going TLS mode - :443")
 		_, err = os.Stat("/kgw/ca/cert")
@@ -136,6 +140,17 @@ func run() error {
 		if err != nil {
 			return fmt.Errorf("could not load key: %s", err.Error())
 		}
+		bs, err := os.ReadFile("/kgw/ca/cert")
+		if err != nil {
+			return fmt.Errorf("could not load cert: %s", err.Error())
+		}
+		log.Printf("Using cert: %s", string(bs))
+		bs, err = os.ReadFile("/kgw/ca/key")
+		if err != nil {
+			return fmt.Errorf("could not load key: %s", err.Error())
+		}
+		log.Printf("Using key: %s", string(bs))
+
 		err = s.ListenAndServeTLS("/kgw/ca/cert", "/kgw/ca/key")
 	default:
 		logrus.Debugf("Going PLAIN mode - :80")

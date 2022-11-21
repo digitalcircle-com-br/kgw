@@ -34,25 +34,35 @@ roleRef:
   kind: ClusterRole
   name: kgw
 ---
-kind: PersistentVolume
 apiVersion: v1
+kind: Secret
 metadata:
-  name: kgw-volume
-  labels:
-    type: local
-    app: kgw
-spec:
-  capacity:
-    storage: 64Mi
-  hostPath:
-    path: >-
-      /var/lib/rancher/k3s/storage/kgw-volume
-    type: DirectoryOrCreate
-  accessModes:
-  - ReadWriteMany
-  persistentVolumeReclaimPolicy: Delete
-  storageClassName: local-path
-  volumeMode: Filesystem
+  name: cert
+  namespace: kgw
+data:
+  cert: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURNakNDQWhxZ0F3SUJBZ0lJVS9tSFhSamxLUnd3RFFZSktvWklodmNOQVFFTEJRQXdJREVlTUJ3R0ExVUUKQXhNVmJXbHVhV05oSUhKdmIzUWdZMkVnTnpjelpqZ3lNQjRYRFRJeU1Ea3lNakl4TURBME4xb1hEVEkwTVRBeQpNakl4TURBME4xb3dGekVWTUJNR0ExVUVBd3dNS2k1b2IzTjBMbXh2WTJGc01JSUJJakFOQmdrcWhraUc5dzBCCkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXdVSUxubVhXNGRWWUpudUJVaEMwT1BlcVFFMEZaMDY5dDd2dk9ia24KTHVZajJnME1acDNKRkwvaUErZElzc1Q4UE8rK1JNd1c5WmkxQzJRTStUUjNmVXRKdmhta0xmMkpGVUVuMEtyZwp2bzMvTThvZHM0aTM3RFVNclZVVy9oSTBVN2I4NGhiSGh0eElyUkM1bzdQeUEyT3BzVnI5dDJsaDBLODZsSVRWCnpTeTZFOHdheFpieHM2eGxydFJZUHR3ZEt1L1lJYW5vcmF5NWhnVmlxZXpUMTVyVmozVm1UWDF4YTMvZ0wrY1UKdlJsTFFqRzY1OS91NlBkeHMzL0pZckVEcWFKNEp3Q1o0TTMrbVM4OFNWL0h3TTNoTUdzRDhxSFgwUUNyaHpjMgp2bGltcC9Vb1M4WDVWMXhOdWNXYnJmVEV5MFhqOU9WUVgrK1BrRWNKQWxxZy93SURBUUFCbzNrd2R6QU9CZ05WCkhROEJBZjhFQkFNQ0JhQXdIUVlEVlIwbEJCWXdGQVlJS3dZQkJRVUhBd0VHQ0NzR0FRVUZCd01DTUF3R0ExVWQKRXdFQi93UUNNQUF3SHdZRFZSMGpCQmd3Rm9BVWYvSnQxV1NOejByekdaRVRZN3Fkd01COVoxWXdGd1lEVlIwUgpCQkF3RG9JTUtpNW9iM04wTG14dlkyRnNNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUF0SzZ4T3N6Uk5VamNXCkl2SWpNQjN0V05OcnA1Ni80WEw0RWFKRVF1UFhGNlYwdGlGa0YzUktJM2xISXRUNi9Pa1FocjA2cC9sWU1tYU0KY0tydDVoU3RBaDJXenJZUng0VTNSdGczdnRwbVlyS0lXa01GVjZRK2h2ZlVjL2FIczc2NzZGVUl5eWZOWnJJTApnbWZqMFJXeGNVYVRaMDJLcWVtU1BuTlQ2TlJZNXIxVGFnZnZDSFMzclNwYTVLWUQ1Z3NjUGpZNERZLytCdmR0CjNoa00weVdsQ2haTk03a2hHOTVJcmoxZVkzRW12OXh1QitYS3Q0TStFeTlpOW5BM01wNmpBd3VrOSs4L3MvczUKcmFXcGFxclVZSkU3SnllV0l3R3FVT2hBbHhjc1V3TGhXSTlQWHNmTlc5Wm83SlhnTzFZajcyV3R2eVFCVGY3NQp1bjR1Vm9MdwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t
+  key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBd1VJTG5tWFc0ZFZZSm51QlVoQzBPUGVxUUUwRlowNjl0N3Z2T2Jrbkx1WWoyZzBNClpwM0pGTC9pQStkSXNzVDhQTysrUk13VzlaaTFDMlFNK1RSM2ZVdEp2aG1rTGYySkZVRW4wS3Jndm8zL004b2QKczRpMzdEVU1yVlVXL2hJMFU3Yjg0aGJIaHR4SXJSQzVvN1B5QTJPcHNWcjl0MmxoMEs4NmxJVFZ6U3k2RTh3YQp4WmJ4czZ4bHJ0UllQdHdkS3UvWUlhbm9yYXk1aGdWaXFlelQxNXJWajNWbVRYMXhhMy9nTCtjVXZSbExRakc2CjU5L3U2UGR4czMvSllyRURxYUo0SndDWjRNMyttUzg4U1YvSHdNM2hNR3NEOHFIWDBRQ3JoemMydmxpbXAvVW8KUzhYNVYxeE51Y1dicmZURXkwWGo5T1ZRWCsrUGtFY0pBbHFnL3dJREFRQUJBb0lCQUFheG9QRmxtYUhNMy9iRgpSRjl4VUt6QWQxY3UwOGNXUlIvK0ZIVXRZcHdQUUtLbTNRMFkzZ1FuK1U0bFRyRlNmV0ltODdJeVY0RStQdGNjCktnN2ZzRnZZcGI4OTZCL25yajNjT2VMU2FHSnhUS3VnanBMUFkzOTgvdWxxRHhmUnpab3d0bVdtWUZiZGZtN3cKSzEzdU42M0NYL2hTcklNVDFWMkRGRVpjcTRNbHYvSlJNc3A1N2pvQjEyQXJBNzB3eGtsUW4vRmxnaU50MjBGNwpicjRFdDFnQWdrbEVUNGhXU25udTdsaE1SVW94SVR2WVV6VDNzV21rWTJLSVc0d3JERCs0NndUQTRmTTY3NmZNCmN6eEZsM2c5c2lxcHNXZTcydjJGOUNGREtjeHBjY2R5TnVOZEw1cXNKMjZNL0hFSGhlUUxEOWR2bmZTU1hDWXQKbmRrT3BpRUNnWUVBK1JaRmJwTGdrMzlmVlFJK1dLbzJ0VWxZOVhmSGYwQnYvdHlFU1BSTzlhWVZ5RzVNRjY5NAp2SXJpNlMxN1J0NHRWVkdZdTczWENwWTlnV3BBNTRuNG1wanhvL1p4a01sU3NhOFM5S1FnTjd3bzkxcWV5L0NaCklCcUhyd1lkVjN4SGxqVzZqYjdXTVgzTFo1dGhLRmVSZGVuRmEwME1PYm9mMkJoMW5EdHNJK2NDZ1lFQXhwOGQKNUdXYS8wRW1Wd3QvcmVoK09BM3JqUE96akx1QS9tYmpwQWl1TGZVV3VYbThScVppTitXa1lHMjJ1OFpLRklFNQpzaHNNQWJnL0g0eERZbG5reS82OW1namZlazR3eE5NWHB2alZsVG1FWTEzU0UwN04vaWVYczBucnZYa3Z0N1JRCjVVRmVhcmFpQjJ1MWlYQ09TTmNFNGU2QnBMa3NWakhzZlBEVDl5a0NnWUFidC9QQUMwNDhlN2NqSVozSWhpQ1MKYWZnaFVOUDlnREUyWGxuR09KRzAybWVnSjA0R2NMdHgxODdLZmdveTU3U0p3d3ZKRUtZbWduT1R2RHcreCtiSApaVysyZkUxRS9ISmNYWXd4ZHpZeW5aaTlkZk1uNUwxVmlqNUJKdUFMQlVSK0hicUYzWSsrY0M0N2VGb0dnRUFxCnEvb1JKOEROaDczVmNWdGRLR3V2VHdLQmdRQ3lJK1h3Z2p5bzhTck02VEJEcndEOWoyYVRUY1BjMWhNVW1QMVUKa3NCOTBaTG5HVXNHNXBXeTRwRXlOMVNzUjJVTHpQY05TZnJUMUFjeGFXREtaaXV4MXJFQTVUSmloSnh5KzR6OApJYk9XR2pjbDAvRGxoa2wweU5mallzby9idUNnVitZeUtCWGhpaG42bzl6Mi91OXVYd012Qy9aVTRndms1dlBlCi96UnRPUUtCZ1FDQUlrek5peHUyc1BGS25SNmNPVXIrK1pjUDEzZW5Fd1JPQXFqSVVZOXZXMm5tUHRrRlZTT00KazNTUlJmM2ZSWWxRQlBTTWpQb1dHSmpMRnNLajFyVzZZZjFnSFNieExBL24zT3VQOEdpd2ZUWURxRE9VdFo5dApwalY5ZkR2TW42WXFqQzJJWm5lWTZoNGkxMS95SE0yM2k4UjZBMWd6YlBRUHJocGp0alEzYnc9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+
+---
+# kind: PersistentVolume
+# apiVersion: v1
+# metadata:
+#   name: kgw-volume
+#   labels:
+#     type: local
+#     app: kgw
+# spec:
+#   capacity:
+#     storage: 64Mi
+#   hostPath:
+#     path: >-
+#       /var/lib/rancher/k3s/storage/kgw-volume
+#     type: DirectoryOrCreate
+#   accessModes:
+#   - ReadWriteOnce
+#   persistentVolumeReclaimPolicy: Delete
+#   storageClassName: local-path
+#   volumeMode: Filesystem
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -64,7 +74,7 @@ metadata:
 spec:
   storageClassName: local-path
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
       storage: 64Mi
@@ -77,19 +87,13 @@ metadata:
 data:
   config.yaml: |
     addr: ":443"
-    secure: false
+    secure: true
     acme:
-      enabled: true
-    cert: |
-      -----BEGIN CERTIFICATE-----
-      -----END CERTIFICATE-----
-    key: |
-      -----BEGIN RSA PRIVATE KEY-----
-      -----END RSA PRIVATE KEY-----
-    routes:
-      - path: /hw/
-        target: http://hw:80
-        strip-path: true
+      enabled: false
+   
+binaryData: {}
+
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -110,7 +114,7 @@ spec:
     spec:
       containers:
       - name: *app
-        image: digitalcircle/latest
+        image: digitalcircle/kgw:arm64
         env:
           - name: LOG_LEVEL
             value: trace
@@ -125,7 +129,7 @@ spec:
       imagePullSecrets:
         - name: reg
       restartPolicy: Always
-      serviceAccount: kgw
+      serviceAccountName: kgw
       volumes:
         - name: ca
           persistentVolumeClaim:
@@ -134,7 +138,8 @@ spec:
           configMap:
             name: kgw-config
         - name: cert
-          secretName: cert
+          secret: 
+            secretName: cert
 ---
 apiVersion: v1
 kind: Service
