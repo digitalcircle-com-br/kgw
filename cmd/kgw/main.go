@@ -119,7 +119,7 @@ func run() error {
 
 	case cfg.Acme != nil && cfg.Acme.Enabled:
 		logrus.Debugf("Going ACME/TLS mode - :443")
-		
+
 		m := &autocert.Manager{
 			Cache:  autocert.DirCache("/kgw/ca"),
 			Prompt: autocert.AcceptTOS,
@@ -127,6 +127,7 @@ func run() error {
 		}
 
 		s.TLSConfig = m.TLSConfig()
+		s.TLSConfig.NextProtos = []string{"h2", "http/1.1"}
 
 		err = s.ListenAndServeTLS("", "")
 
